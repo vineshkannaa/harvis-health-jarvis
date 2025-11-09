@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  // Support both 'next' parameter and Supabase's default redirect_to
+  const next = searchParams.get("next") || searchParams.get("redirect_to") || "/dashboard";
 
   if (token_hash && type) {
     const supabase = await createClient();
@@ -17,14 +18,14 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
     if (!error) {
-      // redirect user to specified redirect URL or root of app
+      // redirect user to specified redirect URL or dashboard
       redirect(next);
     } else {
       // redirect the user to an error page with some instructions
-      redirect(`/auth/error?error=${error?.message}`);
+      redirect(`/auth/error?error=${encodeURIComponent(error?.message || 'Verification failed')}`);
     }
   }
 
   // redirect the user to an error page with some instructions
-  redirect(`/auth/error?error=No token hash or type`);
+  redirect(`/auth/error?error=${encodeURIComponent('No token hash or type')}`);
 }
