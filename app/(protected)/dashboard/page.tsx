@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BottomNav } from '@/components/bottom-nav';
 import { AddLogSheet } from '@/components/add-log-sheet';
-import { Dumbbell, Activity, UtensilsCrossed, Moon } from 'lucide-react';
+import { Dumbbell, Activity, UtensilsCrossed, Moon, TrendingUp } from 'lucide-react';
 import { Reminders, type RemindersRef } from '@/components/reminders';
 import { TargetSetup } from '@/components/target-setup';
+import { Trends } from '@/components/trends';
 import type { LogHistoryResponse } from '@/lib/types';
 import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
@@ -23,7 +25,7 @@ export default function DashboardPage() {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('/api/logs/history');
+      const response = await fetch('/api/logs/history?limit=100');
       if (response.ok) {
         const history: LogHistoryResponse = await response.json();
         setData(history);
@@ -158,12 +160,23 @@ export default function DashboardPage() {
         <Reminders ref={remindersRef} />
       </div>
 
-      {/* Diet Logs */}
-      <div className="mb-6">
-        <h2 className="mb-3 text-lg font-semibold flex items-center gap-2">
-          <UtensilsCrossed className="size-5" />
-          Diet Logs
-        </h2>
+      {/* Tabs for Logs and Trends */}
+      <Tabs defaultValue="logs" className="mb-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="trends" className="flex items-center gap-2">
+            <TrendingUp className="size-4" />
+            Trends
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="logs" className="space-y-6">
+          {/* Diet Logs */}
+          <div className="mb-6">
+            <h2 className="mb-3 text-lg font-semibold flex items-center gap-2">
+              <UtensilsCrossed className="size-5" />
+              Diet Logs
+            </h2>
         {data?.foodLogs && data.foodLogs.length > 0 ? (
           <div className="space-y-2">
             {data.foodLogs.map((log) => (
@@ -254,6 +267,12 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+        </TabsContent>
+
+        <TabsContent value="trends">
+          <Trends data={data} />
+        </TabsContent>
+      </Tabs>
 
       <BottomNav onAddClick={() => setOpen(true)} />
       <AddLogSheet
