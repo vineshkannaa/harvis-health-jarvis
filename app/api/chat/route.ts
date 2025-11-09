@@ -127,6 +127,15 @@ export async function POST(req: Request) {
           calories_burned: log.calories_burned,
         }));
 
+      const sleepLogs = logs
+        .filter((log) => log.log_type === 'sleep')
+        .map((log) => ({
+          id: log.id,
+          logged_at: log.logged_at,
+          raw_text: log.raw_text,
+          sleep_hours: log.sleep_hours,
+        }));
+
       // Calculate today's aggregates
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -139,6 +148,7 @@ export async function POST(req: Request) {
         carbs_consumed: 0,
         fat_consumed: 0,
         calories_burned: 0,
+        sleep_hours: 0,
       };
 
       todayLogs.forEach((log) => {
@@ -149,12 +159,15 @@ export async function POST(req: Request) {
           aggregates.fat_consumed += Number(log.total_fat || 0);
         } else if (log.log_type === 'workout') {
           aggregates.calories_burned += Number(log.calories_burned || 0);
+        } else if (log.log_type === 'sleep') {
+          aggregates.sleep_hours += Number(log.sleep_hours || 0);
         }
       });
 
       const history: LogHistoryResponse = {
         foodLogs,
         workoutLogs,
+        sleepLogs,
         todayAggregates: aggregates,
       };
 
