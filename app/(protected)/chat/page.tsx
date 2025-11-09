@@ -43,10 +43,11 @@ const ChatPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 flex flex-col">
-      <div className="flex-1 flex flex-col min-h-0">
-        <Conversation className="flex-1">
-          <ConversationContent>
+    <div className="min-h-screen flex flex-col">
+      {/* Scrollable conversation area */}
+      <div className="flex-1 overflow-y-auto pb-48">
+        <Conversation className="min-h-full">
+          <ConversationContent className="px-4 py-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                 <h1 className="text-2xl font-bold">Chat with HARVIS</h1>
@@ -65,7 +66,13 @@ const ChatPage = () => {
                       return (
                         <Fragment key={`${message.id}-${i}`}>
                           <Message from={message.role}>
-                            <MessageContent>
+                            <MessageContent
+                              className={
+                                message.role === 'user'
+                                  ? '!text-black [&_*]:!text-black'
+                                  : ''
+                              }
+                            >
                               <MessageResponse>{part.text}</MessageResponse>
                             </MessageContent>
                           </Message>
@@ -102,22 +109,28 @@ const ChatPage = () => {
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
+      </div>
 
-        <PromptInput onSubmit={handleSubmit} className="mt-4">
-          <PromptInputBody>
-            <PromptInputTextarea
-              onChange={(e) => setInput(e.target.value)}
-              value={input}
-              placeholder="Ask HARVIS about your health data..."
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputSubmit
-              disabled={!input && status !== 'submitted'}
-              status={status}
-            />
-          </PromptInputFooter>
-        </PromptInput>
+      {/* Fixed input bar above bottom nav */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 w-full border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="w-full px-4 py-2">
+          <PromptInput onSubmit={handleSubmit} className="w-full max-w-full">
+            <PromptInputBody className="w-full">
+              <PromptInputTextarea
+                onChange={(e) => setInput(e.target.value)}
+                value={input}
+                placeholder="Ask HARVIS about your health data..."
+                className="w-full max-w-full"
+              />
+            </PromptInputBody>
+            <PromptInputFooter className="w-full max-w-full justify-end">
+              <PromptInputSubmit
+                disabled={!input && status !== 'submitted'}
+                status={status}
+              />
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
       </div>
 
       <BottomNav onAddClick={() => {}} />

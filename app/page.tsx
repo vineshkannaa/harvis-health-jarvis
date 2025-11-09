@@ -1,5 +1,6 @@
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { Dumbbell } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -8,8 +9,9 @@ export default function Home() {
       <nav className="w-full border-b border-b-foreground/10 h-16">
         <div className="mx-auto max-w-5xl h-full flex items-center justify-between px-5">
           <div className="flex items-center gap-2 font-semibold">
-            <Link href={"/"} className="text-base md:text-lg">
-              HARVIS
+            <Link href={"/"} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Dumbbell className="size-6 text-primary" />
+              <span className="text-base md:text-lg">HARVIS</span>
             </Link>
             <span className="hidden sm:inline text-muted-foreground text-xs md:text-sm">
               Health‑JARVIS

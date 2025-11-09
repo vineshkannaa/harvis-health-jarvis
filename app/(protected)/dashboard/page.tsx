@@ -86,7 +86,7 @@ export default function DashboardPage() {
     <div className="min-h-screen pb-20">
       {/* Header */}
       <div className="mb-6 flex items-center gap-2">
-        <Dumbbell className="size-6" />
+        <Dumbbell className="size-6 text-primary" />
         <h1 className="text-2xl font-bold">HARVIS</h1>
       </div>
 

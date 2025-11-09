@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LogoutButton } from "@/components/logout-button";
+import { Dumbbell } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProtectedLayout({
@@ -19,8 +20,9 @@ export default async function ProtectedLayout({
       <nav className="w-full border-b border-b-foreground/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex justify-between items-center p-4 px-6">
           <div className="flex gap-6 items-center">
-            <Link href="/dashboard" className="font-bold text-lg hover:opacity-80 transition-opacity">
-              Dashboard
+            <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Dumbbell className="size-5 text-primary" />
+              <span className="hidden sm:block font-bold text-lg">Dashboard</span>
             </Link>
           </div>
           
