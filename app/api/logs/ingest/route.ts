@@ -61,13 +61,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate that we have at least meals or workout
-    if ((!parsed.meals || parsed.meals.length === 0) && !parsed.workout) {
-      console.error('[Ingest] No meals or workout found in parsed data');
+    // Validate that we have at least meals, workout, or sleep
+    if (
+      (!parsed.meals || parsed.meals.length === 0) &&
+      !parsed.workout &&
+      !parsed.sleep
+    ) {
+      console.error('[Ingest] No meals, workout, or sleep found in parsed data');
+      console.error('[Ingest] Parsed data:', JSON.stringify(parsed, null, 2));
       return NextResponse.json(
         {
           success: false,
-          error: 'Could not extract any meals or workout from input. Please try rephrasing.',
+          error: 'Could not extract any meals, workout, or sleep from input. Please try rephrasing.',
         } as IngestLogResponse,
         { status: 422 }
       );
@@ -152,6 +157,37 @@ export async function POST(request: Request) {
       }
     }
 
+    // Create sleep log entry if present
+    if (parsed.sleep) {
+      console.log('[Ingest] Creating sleep log');
+      
+      const sleepInsert: LogInsert = {
+        user_id: user.id,
+        log_type: 'sleep',
+        raw_text: parsed.sleep.summary, // Use LLM summary
+        source: body.audioBase64 ? 'voice' : 'text',
+        logged_at: loggedAt,
+        sleep_hours: parsed.sleep.sleepHours,
+      };
+
+      console.log('[Ingest] Inserting sleep:', {
+        hours: sleepInsert.sleep_hours,
+      });
+
+      const { data: sleepData, error: sleepError } = await supabase
+        .from('logs')
+        .insert(sleepInsert)
+        .select()
+        .single();
+
+      if (sleepError) {
+        console.error('[Ingest] Failed to insert sleep:', sleepError);
+      } else {
+        logIds.push(sleepData.id);
+        console.log('[Ingest] Successfully saved sleep log:', sleepData.id);
+      }
+    }
+
     if (logIds.length === 0) {
       return NextResponse.json(
         {
@@ -168,6 +204,7 @@ export async function POST(request: Request) {
       logIds,
       mealsCreated: parsed.meals?.length || 0,
       workoutCreated: !!parsed.workout,
+      sleepCreated: !!parsed.sleep,
       parsed,
     } as IngestLogResponse);
   } catch (error) {

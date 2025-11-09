@@ -10,19 +10,23 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, Type, Loader2, X } from 'lucide-react';
+import { Mic, Type, Loader2, X, Bell } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import type { IngestLogResponse } from '@/lib/types';
 
 export function AddLogSheet({
   open,
   onOpenChange,
   onSuccess,
+  onAddReminder,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  onAddReminder?: (text: string) => void;
 }) {
-  const [mode, setMode] = useState<'select' | 'text' | 'voice'>('select');
+  const [mode, setMode] = useState<'select' | 'text' | 'voice' | 'reminder'>('select');
+  const [reminderText, setReminderText] = useState('');
   const [text, setText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -153,6 +157,7 @@ export function AddLogSheet({
       stopRecording();
     }
     setText('');
+    setReminderText('');
     setMode('select');
     setRecordingTime(0);
     onOpenChange(false);
@@ -162,9 +167,9 @@ export function AddLogSheet({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Log Entry</DialogTitle>
+          <DialogTitle>Add</DialogTitle>
           <DialogDescription>
-            Log your food or workout using text or voice
+            Log your health data or add a reminder
           </DialogDescription>
         </DialogHeader>
 
@@ -176,7 +181,7 @@ export function AddLogSheet({
               className="h-auto flex-col gap-2 py-6"
             >
               <Type className="size-6" />
-              <span>Text Input</span>
+              <span>Text Log</span>
             </Button>
             <Button
               onClick={() => setMode('voice')}
@@ -184,7 +189,15 @@ export function AddLogSheet({
               className="h-auto flex-col gap-2 py-6"
             >
               <Mic className="size-6" />
-              <span>Voice Recording</span>
+              <span>Voice Log</span>
+            </Button>
+            <Button
+              onClick={() => setMode('reminder')}
+              variant="outline"
+              className="h-auto flex-col gap-2 py-6"
+            >
+              <Bell className="size-6" />
+              <span>Reminder</span>
             </Button>
           </div>
         )}
@@ -278,6 +291,48 @@ export function AddLogSheet({
                 Processing audio...
               </div>
             )}
+          </div>
+        )}
+
+        {mode === 'reminder' && (
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Enter reminder text..."
+              value={reminderText}
+              onChange={(e) => setReminderText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && reminderText.trim()) {
+                  onAddReminder?.(reminderText.trim());
+                  setReminderText('');
+                  setMode('select');
+                  onOpenChange(false);
+                }
+              }}
+              disabled={isProcessing}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setMode('select')}
+                variant="outline"
+                disabled={isProcessing}
+              >
+                Back
+              </Button>
+              <Button
+                onClick={() => {
+                  if (reminderText.trim()) {
+                    onAddReminder?.(reminderText.trim());
+                    setReminderText('');
+                    setMode('select');
+                    onOpenChange(false);
+                  }
+                }}
+                disabled={!reminderText.trim() || isProcessing}
+                className="flex-1"
+              >
+                Add Reminder
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>

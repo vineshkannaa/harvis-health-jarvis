@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Separate food and workout logs
+    // Separate food, workout, and sleep logs
     const foodLogs = logs
       .filter((log) => log.log_type === 'food')
       .map((log) => ({
@@ -59,6 +59,15 @@ export async function GET(request: Request) {
         calories_burned: log.calories_burned,
       }));
 
+    const sleepLogs = logs
+      .filter((log) => log.log_type === 'sleep')
+      .map((log) => ({
+        id: log.id,
+        logged_at: log.logged_at,
+        raw_text: log.raw_text,
+        sleep_hours: log.sleep_hours,
+      }));
+
     // Calculate today's aggregates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -66,7 +75,7 @@ export async function GET(request: Request) {
 
     const { data: todayLogs, error: todayError } = await supabase
       .from('logs')
-      .select('log_type, total_calories, total_protein, total_carbs, total_fat, calories_burned')
+      .select('log_type, total_calories, total_protein, total_carbs, total_fat, calories_burned, sleep_hours')
       .eq('user_id', user.id)
       .gte('logged_at', todayISO);
 
@@ -83,6 +92,7 @@ export async function GET(request: Request) {
       carbs_consumed: 0,
       fat_consumed: 0,
       calories_burned: 0,
+      sleep_hours: 0,
     };
 
     todayLogs?.forEach((log) => {
@@ -93,12 +103,15 @@ export async function GET(request: Request) {
         aggregates.fat_consumed += Number(log.total_fat || 0);
       } else if (log.log_type === 'workout') {
         aggregates.calories_burned += Number(log.calories_burned || 0);
+      } else if (log.log_type === 'sleep') {
+        aggregates.sleep_hours += Number(log.sleep_hours || 0);
       }
     });
 
     const response: LogHistoryResponse = {
       foodLogs,
       workoutLogs,
+      sleepLogs,
       todayAggregates: aggregates,
     };
 

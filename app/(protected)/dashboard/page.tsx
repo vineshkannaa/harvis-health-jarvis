@@ -1,17 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNav } from '@/components/bottom-nav';
 import { AddLogSheet } from '@/components/add-log-sheet';
-import { Dumbbell, Activity, UtensilsCrossed } from 'lucide-react';
+import { Dumbbell, Activity, UtensilsCrossed, Moon } from 'lucide-react';
+import { Reminders, type RemindersRef } from '@/components/reminders';
+import { TargetSetup } from '@/components/target-setup';
 import type { LogHistoryResponse } from '@/lib/types';
+import type { Database } from '@/lib/database.types';
 import { format } from 'date-fns';
+
+type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 
 export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<LogHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+  const remindersRef = useRef<RemindersRef>(null);
 
   const fetchHistory = async () => {
     try {
@@ -27,12 +35,34 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/user/targets');
+      if (response.ok) {
+        const { profile: userProfile } = await response.json();
+        setProfile(userProfile);
+        // Show setup if profile doesn't exist or setup not completed
+        if (!userProfile || !userProfile.setup_completed) {
+          setShowSetup(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
   useEffect(() => {
     fetchHistory();
+    fetchProfile();
   }, []);
 
   const handleSuccess = () => {
     fetchHistory();
+  };
+
+  const handleSetupComplete = () => {
+    setShowSetup(false);
+    fetchProfile();
   };
 
   if (loading) {
@@ -49,6 +79,7 @@ export default function DashboardPage() {
     carbs_consumed: 0,
     fat_consumed: 0,
     calories_burned: 0,
+    sleep_hours: 0,
   };
 
   return (
@@ -71,7 +102,12 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">
               {Math.round(aggregates.calories_consumed)} kcal
             </div>
-            <div className="text-xs text-muted-foreground space-y-0.5">
+            {profile?.target_calories_consumed && (
+              <div className="text-xs text-muted-foreground">
+                Target: {Math.round(profile.target_calories_consumed)} kcal
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
               <div>P: {Math.round(aggregates.protein_consumed)}g</div>
               <div>C: {Math.round(aggregates.carbs_consumed)}g</div>
               <div>F: {Math.round(aggregates.fat_consumed)}g</div>
@@ -87,8 +123,39 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">
               {Math.round(aggregates.calories_burned)} kcal
             </div>
+            {profile?.target_calories_burned && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Target: {Math.round(profile.target_calories_burned)} kcal
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        <Card className="col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Moon className="size-4" />
+              Sleep
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {aggregates.sleep_hours > 0
+                ? `${aggregates.sleep_hours.toFixed(1)}h`
+                : '—'}
+            </div>
+            {aggregates.sleep_hours > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Last night
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Reminders Section */}
+      <div className="mb-6">
+        <Reminders ref={remindersRef} />
       </div>
 
       {/* Diet Logs */}
@@ -103,10 +170,12 @@ export default function DashboardPage() {
               <Card key={log.id}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium mb-1">
-                        {log.raw_text || 'Food entry'}
-                      </p>
+                    <div className="flex items-start gap-3 flex-1">
+                      <UtensilsCrossed className="size-5 mt-0.5 text-primary" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium mb-1">
+                          {log.raw_text || 'Food entry'}
+                        </p>
                       <div className="text-xs text-muted-foreground space-y-0.5">
                         {log.total_calories && (
                           <div>{Math.round(log.total_calories)} kcal</div>
@@ -119,6 +188,7 @@ export default function DashboardPage() {
                           </div>
                         )}
                       </div>
+                    </div>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {format(new Date(log.logged_at), 'HH:mm')}
@@ -190,7 +260,11 @@ export default function DashboardPage() {
         open={open}
         onOpenChange={setOpen}
         onSuccess={handleSuccess}
+        onAddReminder={(text) => {
+          remindersRef.current?.addReminder(text);
+        }}
       />
+      <TargetSetup open={showSetup} onComplete={handleSetupComplete} />
     </div>
   );
 }

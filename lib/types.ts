@@ -28,10 +28,17 @@ export type ParsedWorkout = {
   caloriesBurned: number;
 };
 
+export type ParsedSleep = {
+  summary: string; // LLM-generated concise summary
+  sleepHours: number;
+  quality?: 'poor' | 'fair' | 'good' | 'excellent';
+};
+
 export type ParsedLogs = {
   rawText: string;
   meals: ParsedMeal[];
   workout?: ParsedWorkout;
+  sleep?: ParsedSleep;
 };
 
 // Legacy type for backward compatibility (single log)
@@ -61,6 +68,7 @@ export type IngestLogResponse = {
   logIds?: string[]; // Array of created log IDs
   mealsCreated?: number;
   workoutCreated?: boolean;
+  sleepCreated?: boolean;
   parsed?: ParsedLogs;
   error?: string;
 };
@@ -85,12 +93,19 @@ export type LogHistoryResponse = {
     duration_minutes: number | null;
     calories_burned: number | null;
   }>;
+  sleepLogs: Array<{
+    id: string;
+    logged_at: string;
+    raw_text: string | null;
+    sleep_hours: number | null;
+  }>;
   todayAggregates: {
     calories_consumed: number;
     protein_consumed: number;
     carbs_consumed: number;
     fat_consumed: number;
     calories_burned: number;
+    sleep_hours: number;
   };
 };
 

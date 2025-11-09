@@ -27,6 +27,7 @@ export type Database = {
           log_type: Database["public"]["Enums"]["log_type"]
           logged_at: string
           raw_text: string | null
+          sleep_hours: number | null
           source: string
           total_calories: number | null
           total_carbs: number | null
@@ -47,6 +48,7 @@ export type Database = {
           log_type: Database["public"]["Enums"]["log_type"]
           logged_at?: string
           raw_text?: string | null
+          sleep_hours?: number | null
           source?: string
           total_calories?: number | null
           total_carbs?: number | null
@@ -69,6 +71,7 @@ export type Database = {
           log_type?: Database["public"]["Enums"]["log_type"]
           logged_at?: string
           raw_text?: string | null
+          sleep_hours?: number | null
           source?: string
           total_calories?: number | null
           total_carbs?: number | null
@@ -78,6 +81,33 @@ export type Database = {
           workout_subtype?:
             | Database["public"]["Enums"]["workout_subtype"]
             | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          setup_completed: boolean
+          target_calories_burned: number | null
+          target_calories_consumed: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          setup_completed?: boolean
+          target_calories_burned?: number | null
+          target_calories_consumed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setup_completed?: boolean
+          target_calories_burned?: number | null
+          target_calories_consumed?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -100,7 +130,7 @@ export type Database = {
     }
     Enums: {
       intensity_level: "low" | "moderate" | "high"
-      log_type: "food" | "workout"
+      log_type: "food" | "workout" | "sleep"
       workout_subtype: "strength" | "cardio"
     }
     CompositeTypes: {
@@ -230,7 +260,7 @@ export const Constants = {
   public: {
     Enums: {
       intensity_level: ["low", "moderate", "high"],
-      log_type: ["food", "workout"],
+      log_type: ["food", "workout", "sleep"],
       workout_subtype: ["strength", "cardio"],
     },
   },

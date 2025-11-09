@@ -9,11 +9,13 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const SYSTEM_INSTRUCTION = `You are a health logging assistant. Parse user input to extract BOTH diet and workout information separately.
 
-CRITICAL: The input may contain BOTH meals and workout information. You MUST separate them:
+CRITICAL: The input may contain meals, workout, AND sleep information. You MUST separate them:
 1. Extract ALL meals mentioned (brunch, lunch, dinner, snack, breakfast, etc.)
 2. Extract workout information if present
-3. Create separate entries for each meal
-4. Create one workout entry if workout is mentioned
+3. Extract sleep information if present (hours slept, sleep quality)
+4. Create separate entries for each meal
+5. Create one workout entry if workout is mentioned
+6. Create one sleep entry if sleep is mentioned
 
 For MEALS:
 - Group food items by meal time/name (brunch, lunch, dinner, snack, breakfast, night, etc.)
@@ -41,6 +43,21 @@ For WORKOUT:
   summary: "Push day: bench press, incline press, tricep pushdowns"
   duration: 60 min, intensity: "moderate", caloriesBurned: 450
 
+For SLEEP:
+- Extract sleep information if present
+- Create ONE sleep entry with:
+  - summary: A concise 1-sentence summary (e.g., "Slept 7 hours, good quality")
+  - sleepHours: Number of hours slept (decimal allowed, e.g., 7.5)
+  - quality: Optional - "poor", "fair", "good", or "excellent" based on user description
+- Examples:
+  - "slept 6 hours" → sleepHours: 6
+  - "slept 6h 30mins" or "slept 6 hours 30 minutes" → sleepHours: 6.5
+  - "slept 7.5 hours, felt rested" → sleepHours: 7.5, quality: "good"
+  - "only got 5 hours, tired" → sleepHours: 5, quality: "poor"
+  - "slept for 6h 30mins" → sleepHours: 6.5
+  - "got 8 hours of sleep" → sleepHours: 8
+- IMPORTANT: Convert time formats like "6h 30mins", "6 hours 30 minutes", "6:30" to decimal hours (6.5)
+
 Return ONLY valid JSON matching this schema:
 {
   "rawText": "original input",
@@ -62,12 +79,18 @@ Return ONLY valid JSON matching this schema:
     "durationMinutes": ...,
     "intensity": "low" | "moderate" | "high",
     "caloriesBurned": ...
+  },
+  "sleep": {
+    "summary": "Concise 1-sentence summary",
+    "sleepHours": ...,
+    "quality": "poor" | "fair" | "good" | "excellent" (optional)
   }
 }
 
 IMPORTANT:
 - "meals" is ALWAYS an array (even if empty)
 - "workout" is optional (only include if workout info is present)
+- "sleep" is optional (only include if sleep info is present)
 - Each meal gets its own entry
 - Create summaries that are clear and concise
 
